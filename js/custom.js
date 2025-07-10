@@ -10,11 +10,15 @@
 
     // BACKSTRETCH SLIDESHOW
     $('.hero-section').backstretch([
-      // "images/slideshow/afro-woman-cleaning-window-with-rag-home.jpg", 
+      "images/slideshow/afro-woman-cleaning-window-with-rag-home.jpg",
+      "images/slideshow/afro-woman-holding-bucket-with-cleaning-items.jpg",
+      "images/slideshow/unrecognizable-cleaner-walking-into-hotel-room-with-tools-detergents.jpg",
       "images/techpro/technician.jpeg",
       "images/techpro/tech1.jpeg",
       "images/techpro/tech2.jpeg",
-    ],  {duration: 2000, fade: 750});
+      "images/techpro/pexels-kseniachernaya-5768284.jpg",
+      "images/techpro/pexels-marcin-jozwiak-199600-3641377.jpg"
+    ],  {duration: 3000, fade: 900});
     
     // CUSTOM LINK
     $('.smoothscroll').click(function(){
