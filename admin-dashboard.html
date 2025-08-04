@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <title>Admin Dashboard - Techi-Pro Konnect</title>
+
+        <!-- CSS FILES -->        
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+
+        <link href="css/bootstrap-icons.css" rel="stylesheet">
+
+        <link href="css/tooplate-clean-work.css" rel="stylesheet">
+
+        <style>
+            .admin-header {
+                background: linear-gradient(120deg, #7cb8eb 0%, #4f83d1 100%);
+                color: white;
+                padding: 1rem 0;
+            }
+            
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+                margin: 2rem 0;
+            }
+            
+            .stat-card {
+                background: white;
+                border-radius: 10px;
+                padding: 1.5rem;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                text-align: center;
+                border-left: 4px solid #4f83d1;
+            }
+            
+            .stat-card h3 {
+                color: #4f83d1;
+                font-size: 2.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .stat-card p {
+                color: #666;
+                margin-bottom: 0;
+            }
+            
+            .review-card {
+                background: white;
+                border-radius: 10px;
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                border-left: 4px solid #ffc107;
+            }
+            
+            .technician-info h5 {
+                color: #4f83d1;
+                margin-bottom: 0.5rem;
+            }
+            
+            .firebase-results {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin: 1rem 0;
+            }
+            
+            .status {
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            
+            .status.pending {
+                background: #fff3cd;
+                color: #856404;
+                border: 1px solid #ffeaa7;
+            }
+            
+            .status.verified,
+            .status.firebase-verified {
+                background: #d1edff;
+                color: #0c5460;
+                border: 1px solid #b8daff;
+            }
+            
+            .status.processing {
+                background: #e2e3e5;
+                color: #383d41;
+                border: 1px solid #d6d8db;
+            }
+            
+            .status.firebase-rejected {
+                background: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+            
+            .status.firebase-error {
+                background: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+            
+            .status.admin-review-required,
+            .status.awaiting-admin-review {
+                background: #fff3cd;
+                color: #856404;
+                border: 1px solid #ffeaa7;
+            }
+            
+            .confidence-score {
+                background: #f8f9fa;
+                padding: 0.5rem 1rem;
+                border-radius: 25px;
+                font-weight: 600;
+                color: #495057;
+            }
+            
+            .document-preview {
+                display: flex;
+                gap: 0.5rem;
+                margin: 1rem 0;
+                flex-wrap: wrap;
+            }
+            
+            .doc-thumbnail {
+                width: 60px;
+                height: 60px;
+                object-fit: cover;
+                border-radius: 8px;
+                border: 2px solid #dee2e6;
+                cursor: pointer;
+                transition: transform 0.2s;
+            }
+            
+            .doc-thumbnail:hover {
+                transform: scale(1.1);
+                border-color: #4f83d1;
+            }
+            
+            .actions {
+                display: flex;
+                gap: 0.5rem;
+                margin-top: 1rem;
+            }
+            
+            .btn-sm {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.875rem;
+            }
+            
+            .sidebar {
+                background: #343a40;
+                min-height: calc(100vh - 76px);
+                padding-top: 1rem;
+            }
+            
+            .sidebar .nav-link {
+                color: #adb5bd;
+                padding: 0.75rem 1rem;
+                border-radius: 0;
+            }
+            
+            .sidebar .nav-link:hover,
+            .sidebar .nav-link.active {
+                color: white;
+                background: #495057;
+            }
+            
+            .sidebar .nav-link i {
+                margin-right: 0.5rem;
+            }
+            
+            .main-content {
+                padding: 2rem;
+                background: #f8f9fa;
+                min-height: calc(100vh - 76px);
+            }
+            
+            .modal-lg {
+                max-width: 800px;
+            }
+            
+            .document-full {
+                width: 100%;
+                max-height: 400px;
+                object-fit: contain;
+                border-radius: 8px;
+            }
+            
+            .loading {
+                text-align: center;
+                padding: 2rem;
+                color: #6c757d;
+            }
+            
+            .error {
+                background: #f8d7da;
+                color: #721c24;
+                padding: 1rem;
+                border-radius: 5px;
+                margin: 1rem 0;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <!-- Admin Header -->
+        <div class="admin-header">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-6">
+                        <h4 class="mb-0">
+                            <i class="bi-shield-check me-2"></i>
+                            Admin Dashboard - Techi-Pro Konnect
+                        </h4>
+                        <small id="user-info" class="text-white-50"></small>
+                    </div>
+                    <div class="col-6 text-end">
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="refreshData()">
+                            <i class="bi-arrow-clockwise"></i> Refresh
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="logout()">
+                            <i class="bi-box-arrow-right"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <div class="col-md-2 sidebar">
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" onclick="showDashboard()">
+                            <i class="bi-speedometer2"></i>Dashboard
+                        </a>
+                        <a class="nav-link" href="#" onclick="showPendingReviews()">
+                            <i class="bi-person-check"></i>KYC Reviews
+                        </a>
+                        <a class="nav-link" href="#" onclick="showAllUsers()">
+                            <i class="bi-people"></i>All Users
+                        </a>
+                        <a class="nav-link" href="#" onclick="showAllTechnicians()">
+                            <i class="bi-tools"></i>All Technicians
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSystemOverview()">
+                            <i class="bi-graph-up"></i>System Overview
+                        </a>
+                        <a class="nav-link" href="#" onclick="showCategories()">
+                            <i class="bi-tags"></i>Categories
+                        </a>
+                        <a class="nav-link" href="#" onclick="showBookings()">
+                            <i class="bi-calendar-check"></i>Appointments
+                        </a>
+                        <a class="nav-link" href="#" onclick="showServices()">
+                            <i class="bi-list-ul"></i>Services
+                        </a>
+                        <a class="nav-link" href="#" onclick="showPayments()">
+                            <i class="bi-credit-card"></i>Payments
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSettings()">
+                            <i class="bi-gear"></i>Settings
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-md-10 main-content">
+                    <div id="content-area">
+                        <!-- API Status Alert -->
+                        <div id="api-status-alert" class="alert alert-warning alert-dismissible fade show" role="alert" style="display: none;">
+                            <h5><i class="bi-exclamation-triangle me-2"></i>API Authorization Issue Detected</h5>
+                            <p class="mb-2">Your admin credentials are valid, but the API server is not recognizing admin privileges. This is a server-side configuration issue.</p>
+                            <div class="mb-2">
+                                <strong>Token Status:</strong> <span class="badge bg-success">Valid</span> | 
+                                <strong>Role:</strong> <span class="badge bg-primary">ADMIN</span> | 
+                                <strong>API Response:</strong> <span class="badge bg-danger">403 Forbidden</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Please contact your API developer to resolve JWT middleware authorization.</small>
+                                <a href="debug-auth.html" class="btn btn-sm btn-outline-info" target="_blank">
+                                    <i class="bi-tools me-1"></i>Debug Tools
+                                </a>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        
+                        <!-- Dashboard Overview -->
+                        <div id="dashboard-content">
+                            <h2 class="mb-4">KYC Management Dashboard</h2>
+                            
+                            <!-- Statistics -->
+                            <div class="stats-grid" id="stats-grid">
+                                <!-- Stats will be loaded here -->
+                            </div>
+
+                            <!-- Recent Activity -->
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>Recent KYC Submissions</h5>
+                                        </div>
+                                        <div class="card-body" id="recent-submissions">
+                                            <!-- Recent submissions will be loaded here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>System Status</h5>
+                                        </div>
+                                        <div class="card-body" id="system-status">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>API Server</span>
+                                                <span class="badge bg-success" id="api-status">Online</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Firebase KYC</span>
+                                                <span class="badge bg-success" id="firebase-status">Active</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Database</span>
+                                                <span class="badge bg-success" id="db-status">Connected</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Reviews Content -->
+                        <div id="pending-reviews-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>Technicians Awaiting Final Review</h2>
+                                <div>
+                                    <select class="form-select d-inline-block w-auto me-2" id="filter-status">
+                                        <option value="">All Status</option>
+                                        <option value="AWAITING_ADMIN_REVIEW">Awaiting Admin Review</option>
+                                        <option value="FIREBASE_VERIFIED">Firebase Verified</option>
+                                        <option value="FIREBASE_PENDING">Firebase Pending</option>
+                                    </select>
+                                    <button class="btn btn-primary" onclick="loadPendingReviews()">
+                                        <i class="bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="pending-reviews-list">
+                                <!-- Pending reviews will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- All Users Content -->
+                        <div id="all-users-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>All Users</h2>
+                                <div>
+                                    <input type="text" class="form-control d-inline-block w-auto me-2" placeholder="Search users..." id="user-search">
+                                    <button class="btn btn-primary" onclick="loadAllUsers()">
+                                        <i class="bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="users-container">
+                                <!-- Users table will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- All Technicians Content -->
+                        <div id="all-technicians-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>All Technicians</h2>
+                                <div>
+                                    <input type="text" class="form-control d-inline-block w-auto me-2" placeholder="Search technicians..." id="technician-search">
+                                    <button class="btn btn-primary" onclick="loadAllTechnicians()">
+                                        <i class="bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="technicians-container">
+                                <!-- Technicians table will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- System Overview Content -->
+                        <div id="system-overview-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>System Overview</h2>
+                                <button class="btn btn-primary" onclick="loadAdminOverview()">
+                                    <i class="bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                            
+                            <div id="overview-container" class="mb-4">
+                                <!-- Overview stats will be loaded here -->
+                            </div>
+                            
+                            <div id="health-container" class="mb-4">
+                                <!-- System health will be loaded here -->
+                            </div>
+                            
+                            <div id="analytics-container">
+                                <!-- Analytics will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Service Categories Content -->
+                        <div id="categories-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>Service Categories</h2>
+                                <button class="btn btn-primary" onclick="loadServiceCategories()">
+                                    <i class="bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                            
+                            <div id="categories-container">
+                                <!-- Categories will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Bookings Content -->
+                        <div id="appointments-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>Appointments Management</h2>
+                                <button class="btn btn-primary" onclick="loadAppointments()">
+                                    <i class="bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                            
+                            <div id="appointments-container">
+                                <!-- Appointments will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Services Content -->
+                        <div id="services-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>Service Management</h2>
+                                <button class="btn btn-primary" onclick="loadServices()">
+                                    <i class="bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                            
+                            <div id="services-container">
+                                <!-- Services will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Payments Content -->
+                        <div id="payments-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>Payment Management</h2>
+                                <button class="btn btn-primary" onclick="loadPayments()">
+                                    <i class="bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                            
+                            <div id="payments-container">
+                                <!-- Payments will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Settings Content -->
+                        <div id="settings-content" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>System Settings</h2>
+                                <button class="btn btn-primary" onclick="loadSettings()">
+                                    <i class="bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                            
+                            <div id="settings-container">
+                                <!-- Settings will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technician Detail Modal -->
+        <div class="modal fade" id="technicianModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Technician Review Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="modal-body-content">
+                        <!-- Modal content will be loaded here -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger" onclick="handleDecision('reject')">
+                            <i class="bi-x-circle"></i> Reject
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="handleDecision('approve')">
+                            <i class="bi-check-circle"></i> Approve
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Modal -->
+        <div class="modal fade" id="notesModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Review Notes</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="review-notes" class="form-label">Admin Notes (Required for rejection)</label>
+                            <textarea class="form-control" id="review-notes" rows="4" placeholder="Enter your review notes..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="submitDecision()">Submit Decision</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Management Modal -->
+        <div class="modal fade" id="categoryModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="categoryModalTitle">Add New Category</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="categoryForm">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">Category Name *</label>
+                                <input type="text" class="form-control" id="categoryName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="categoryDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="categoryDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="categoryActive" checked>
+                                    <label class="form-check-label" for="categoryActive">
+                                        Active Category
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="saveCategoryFromModal()">Save Category</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JAVASCRIPT FILES -->
+        <script src="js/jquery.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/admin-dashboard.js"></script>
+    </body>
+</html>

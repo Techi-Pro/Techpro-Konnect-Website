@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auth Debug Tool - Techi-Pro Konnect</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 2rem; }
+        .debug-section { margin-bottom: 2rem; }
+        .code-block { background: #f8f9fa; padding: 1rem; border-radius: 5px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Authentication Debug Tool</h1>
+        <p>This tool helps diagnose the 403 authorization issue with admin endpoints.</p>
+        
+        <div class="debug-section">
+            <h3>Current Token Analysis</h3>
+            <div id="token-analysis" class="code-block">Loading...</div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>API Test Results</h3>
+            <button id="test-endpoints" class="btn btn-primary">Test All Endpoints</button>
+            <div id="test-results" class="mt-3"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>Recommendations for API Developer</h3>
+            <div class="alert alert-info">
+                <h5>Issue Summary:</h5>
+                <ul>
+                    <li>JWT token contains valid ADMIN role</li>
+                    <li>Login endpoint returns 200 (authentication works)</li>
+                    <li>All admin endpoints return 403 (authorization fails)</li>
+                </ul>
+                
+                <h5>Likely API Issues:</h5>
+                <ol>
+                    <li><strong>JWT Middleware:</strong> Not extracting role from token payload</li>
+                    <li><strong>Role Format:</strong> Expecting different case or format (admin vs ADMIN)</li>
+                    <li><strong>Authorization Logic:</strong> Not properly checking user.role field</li>
+                    <li><strong>Database Query:</strong> Re-querying user instead of trusting JWT token</li>
+                </ol>
+                
+                <h5>Suggested API Fixes:</h5>
+                <div class="alert alert-danger">
+                    <h6>🎯 ISSUE FOUND: TypeScript Interface Problem</h6>
+                    <p>Your <code>requireRole()</code> middleware is correct, but TypeScript might not recognize <code>req.user.role</code>.</p>
+                    <pre>
+// In your rbac.middleware.ts, add proper typing:
+import { Request, Response, NextFunction } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+  };
+}
+
+export function requireRole(...roles: string[]) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    console.log('🔍 requireRole - User:', req.user);
+    console.log('🔍 requireRole - User role:', req.user?.role);
+    console.log('🔍 requireRole - Required roles:', roles);
+    
+    if (!req.user || !roles.includes(req.user.role)) {
+      console.log('❌ requireRole - Access denied');
+      res.status(403).json({ message: 'Forbidden: insufficient role' });
+      return;
+    }
+    console.log('✅ requireRole - Access granted');
+    next();
+  };
+}
+                    </pre>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6>Quick Fix Option:</h6>
+                    <pre>
+// Temporarily add this console.log to see what's happening:
+export function requireRole(...roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    console.log('USER OBJECT:', req.user);
+    console.log('USER ROLE:', req.user?.role);
+    console.log('REQUIRED ROLES:', roles);
+    
+    if (!req.user || !roles.includes(req.user.role)) {
+      res.status(403).json({ message: 'Forbidden: insufficient role' });
+      return;
+    }
+    next();
+  };
+}
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script>
+        const API_BASE_URL = 'https://techiproconnect.onrender.com/api/v1';
+        
+        // Analyze current token
+        function analyzeToken() {
+            const token = localStorage.getItem('admin_token');
+            const analysis = document.getElementById('token-analysis');
+            
+            if (!token) {
+                analysis.innerHTML = 'No token found. Please login first.';
+                return;
+            }
+            
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                analysis.innerHTML = `
+<strong>Token Payload:</strong>
+${JSON.stringify(payload, null, 2)}
+
+<strong>Role Field:</strong> ${payload.role || 'NOT FOUND'}
+<strong>User ID:</strong> ${payload.id || 'NOT FOUND'}
+<strong>Username:</strong> ${payload.username || 'NOT FOUND'}
+<strong>Issued At:</strong> ${new Date(payload.iat * 1000).toISOString()}
+<strong>Expires:</strong> ${payload.exp ? new Date(payload.exp * 1000).toISOString() : 'No expiration'}
+                `;
+            } catch (error) {
+                analysis.innerHTML = 'Error decoding token: ' + error.message;
+            }
+        }
+        
+        // Test various endpoints
+        async function testEndpoints() {
+            const token = localStorage.getItem('admin_token');
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<div class="spinner-border"></div> Testing endpoints...';
+            
+            const endpoints = [
+                { name: 'Profile (Basic Auth)', url: '/profile', requiresAdmin: false },
+                { name: 'User Info', url: '/users/me', requiresAdmin: false },
+                { name: 'KYC Statistics', url: '/admin/kyc-statistics', requiresAdmin: true },
+                { name: 'Pending Reviews', url: '/admin/technicians/pending-review', requiresAdmin: true },
+                { name: 'All Technicians', url: '/admin/technicians', requiresAdmin: true }
+            ];
+            
+            let html = '<table class="table table-bordered mt-3"><thead><tr><th>Endpoint</th><th>Status</th><th>Response</th><th>Headers</th></tr></thead><tbody>';
+            
+            for (const endpoint of endpoints) {
+                try {
+                    console.log(`Testing: ${endpoint.url}`);
+                    const response = await fetch(`${API_BASE_URL}${endpoint.url}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const statusClass = response.ok ? 'success' : 
+                                       response.status === 403 ? 'warning' : 'danger';
+                    
+                    let responseText = response.status;
+                    let responseHeaders = '';
+                    
+                    // Get response headers
+                    for (let [key, value] of response.headers.entries()) {
+                        responseHeaders += `${key}: ${value}<br>`;
+                    }
+                    
+                    try {
+                        const data = await response.json();
+                        responseText += ': ' + (data.message || JSON.stringify(data).substring(0, 100));
+                        console.log(`${endpoint.url} response:`, data);
+                    } catch (e) {
+                        responseText += ': ' + response.statusText;
+                    }
+                    
+                    html += `<tr class="table-${statusClass}">
+                        <td>${endpoint.name}</td>
+                        <td>${response.status}</td>
+                        <td>${responseText}</td>
+                        <td><small>${responseHeaders}</small></td>
+                    </tr>`;
+                    
+                } catch (error) {
+                    console.error(`Error testing ${endpoint.url}:`, error);
+                    html += `<tr class="table-danger">
+                        <td>${endpoint.name}</td>
+                        <td>ERROR</td>
+                        <td>${error.message}</td>
+                        <td>-</td>
+                    </tr>`;
+                }
+            }
+            
+            html += '</tbody></table>';
+            results.innerHTML = html;
+        }
+        
+        // Initialize
+        $(document).ready(function() {
+            analyzeToken();
+            
+            $('#test-endpoints').on('click', testEndpoints);
+        });
+    </script>
+</body>
+</html>

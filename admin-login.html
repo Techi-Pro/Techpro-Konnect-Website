@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <title>Admin Login - Techi-Pro Konnect</title>
+
+        <!-- CSS FILES -->        
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+
+        <link href="css/bootstrap-icons.css" rel="stylesheet">
+
+        <link href="css/tooplate-clean-work.css" rel="stylesheet">
+
+        <style>
+            body {
+                background: linear-gradient(120deg, #7cb8eb 0%, #4f83d1 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .login-container {
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                overflow: hidden;
+                max-width: 400px;
+                width: 100%;
+                margin: 2rem;
+            }
+            
+            .login-header {
+                background: linear-gradient(120deg, #4f83d1 0%, #7cb8eb 100%);
+                color: white;
+                padding: 2rem;
+                text-align: center;
+            }
+            
+            .login-header h3 {
+                margin-bottom: 0.5rem;
+            }
+            
+            .login-body {
+                padding: 2rem;
+            }
+            
+            .form-floating {
+                margin-bottom: 1rem;
+            }
+            
+            .btn-login {
+                background: linear-gradient(120deg, #4f83d1 0%, #7cb8eb 100%);
+                border: none;
+                border-radius: 25px;
+                padding: 0.75rem 2rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                transition: transform 0.2s;
+            }
+            
+            .btn-login:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(79, 131, 209, 0.3);
+            }
+            
+            .alert {
+                border-radius: 10px;
+                margin-bottom: 1rem;
+            }
+            
+            .loading {
+                display: none;
+            }
+            
+            .loading.show {
+                display: inline-block;
+            }
+            
+            .back-to-site {
+                text-align: center;
+                margin-top: 1rem;
+            }
+            
+            .back-to-site a {
+                color: #6c757d;
+                text-decoration: none;
+                font-size: 0.9rem;
+            }
+            
+            .back-to-site a:hover {
+                color: #4f83d1;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="login-container">
+            <div class="login-header">
+                <i class="bi-shield-lock display-4 mb-3"></i>
+                <h3>Admin Login</h3>
+                <p class="mb-0">Techi-Pro Konnect Dashboard</p>
+            </div>
+            
+            <div class="login-body">
+                <div id="alert-container"></div>
+                
+                <form id="login-form">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="username" placeholder="Username or Email" required>
+                        <label for="username"><i class="bi-person me-2"></i>Username or Email</label>
+                    </div>
+                    
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="password" placeholder="Password" required>
+                        <label for="password"><i class="bi-key me-2"></i>Password</label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="remember-me">
+                        <label class="form-check-label" for="remember-me">
+                            Remember me
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-login">
+                            <span class="login-text">Login to Dashboard</span>
+                            <span class="loading">
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                Logging in...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="back-to-site">
+                    <a href="index.html">
+                        <i class="bi-arrow-left me-1"></i>
+                        Back to Main Site
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- JAVASCRIPT FILES -->
+        <script src="js/jquery.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        
+        <script>
+            const API_BASE_URL = 'https://techiproconnect.onrender.com/api/v1';
+            
+            // Check if already logged in
+            $(document).ready(function() {
+                const token = localStorage.getItem('admin_token');
+                if (token) {
+                    // For now, just redirect if token exists
+                    // In a production environment, you'd want to verify the token
+                    window.location.href = 'admin-dashboard.html';
+                }
+            });
+            
+            // Handle login form submission
+            $('#login-form').on('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = $('#username').val();
+                const password = $('#password').val();
+                const rememberMe = $('#remember-me').is(':checked');
+                
+                // Show loading state
+                $('.login-text').hide();
+                $('.loading').addClass('show');
+                $('#login-form button').prop('disabled', true);
+                
+                try {
+                    // Use the exact username as provided (not email)
+                    const response = await fetch(`${API_BASE_URL}/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: username, // Use actual username field
+                            password: password
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Store token
+                        localStorage.setItem('admin_token', data.token);
+                        
+                        // Show success message
+                        showAlert('success', 'Login successful! Redirecting...');
+                        
+                        // Redirect to dashboard
+                        setTimeout(() => {
+                            window.location.href = 'admin-dashboard.html';
+                        }, 1000);
+                        
+                    } else {
+                        // Show error message
+                        showAlert('danger', data.message || 'Login failed. Please check your credentials.');
+                    }
+                    
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showAlert('danger', 'Network error. Please check your connection and try again.');
+                } finally {
+                    // Hide loading state
+                    $('.login-text').show();
+                    $('.loading').removeClass('show');
+                    $('#login-form button').prop('disabled', false);
+                }
+            });
+            
+            function showAlert(type, message) {
+                const alertContainer = $('#alert-container');
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                alertContainer.html(alertHtml);
+                
+                // Auto-dismiss success alerts
+                if (type === 'success') {
+                    setTimeout(() => {
+                        $('.alert').alert('close');
+                    }, 3000);
+                }
+            }
+            
+            // Handle enter key on password field
+            $('#password').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#login-form').submit();
+                }
+            });
+            
+            // Handle enter key on username field
+            $('#username').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#password').focus();
+                }
+            });
+        </script>
+    </body>
+</html>
